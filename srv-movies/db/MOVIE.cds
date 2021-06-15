@@ -5,4 +5,5 @@ namespace kora.db.movie;
 		eidr: String;
 		title : String;
 		isbn: String;
+		virtual bookDescription: String
 	}

@@ -22,7 +22,8 @@
           "options": {
             "model": [
               ".",
-              "./db"
+              "./db",
+              "../srv-books/"
             ]
           }
         }
