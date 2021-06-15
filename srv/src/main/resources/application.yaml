@@ -1,0 +1,26 @@
+
+spring:
+  profiles: cloud
+
+logging:
+  level:
+    root: INFO
+
+---
+spring:
+  profiles: default
+  datasource:
+    url: "jdbc:sqlite:../sqlite.db"
+    driver-class-name: org.sqlite.JDBC
+    initialization-mode: never
+    hikari:
+      maximum-pool-size: 1
+
+cds:
+  security:
+    xsuaa:
+      enabled: false
+    mock:
+      users:
+        - name: Administrator
+          password: admin

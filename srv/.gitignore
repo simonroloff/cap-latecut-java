@@ -1,0 +1,6 @@
+/target/
+/logs.txt
+/node_modules/
+/node/
+/.settings/
+/package-lock.json

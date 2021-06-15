@@ -1,0 +1,329 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>korasoft</groupId>
+	<artifactId>kora-latecut</artifactId>
+	<version>${revision}</version>
+	<packaging>pom</packaging>
+
+	<name>kora-latecut parent</name>
+
+	<properties>
+		<!-- OUR VERSION -->
+		<revision>1.1</revision>
+
+		<!-- DEPENDENCIES VERSION -->
+		<jdk.version>11</jdk.version>
+		<cds.services.version>1.16.1</cds.services.version> <!-- used for com.sap.cds // cds-services-bom -->
+		<cds4j.version>1.20.0</cds4j.version> <!-- used for com.sap.cds // cds4j-maven-plugin -->
+		<spring.boot.version>2.3.3.RELEASE</spring.boot.version>
+
+		<cdsdk.version>^3</cdsdk.version> <!-- not used at the moment?! -->
+		<node.version>v14.15.1</node.version>
+		<cf-logging-version>3.3.0</cf-logging-version> <!-- current version as of mar30,2021 -->
+		
+		<node.url>https://nodejs.org/dist/</node.url>
+
+    	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<modules>
+		<module>srv</module>
+		<module>srv-books</module>
+		<module>srv-movies</module>
+	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- SAP Cloud SDK -->
+
+			<!-- Achtung, nach Update wird XSUAA nicht mehr richtig initialisiert. -->
+			<dependency>
+				<groupId>com.sap.cloud.sdk</groupId>
+				<artifactId>sdk-bom</artifactId>
+				<version>3.46.0</version>    <!-- currentVersion 3.46.0 as of 2021/06/07 -->
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- version is determined by com.sap.cloud.sdk:sdk-bom (3.40.0->2.8.4) ... we do not want that! -->
+			<dependency>
+				<groupId>com.sap.cloud.security.xsuaa</groupId>
+				<artifactId>xsuaa-spring-boot-starter</artifactId>
+				<version>2.8.10</version>
+			</dependency>
+	
+
+
+			<!-- CDS SERVICES / CAP -->
+			<dependency>
+				<groupId>com.sap.cds</groupId>
+				<artifactId>cds-services-bom</artifactId>
+				<version>${cds.services.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- SPRING BOOT -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>${spring.boot.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- Lombok is included in Cloud SDK -->
+			<!--dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>1.18.12</version>
+			</dependency-->
+
+			<dependency>
+				<groupId>jakarta.xml.bind</groupId>
+				<artifactId>jakarta.xml.bind-api</artifactId>
+				<version>2.3.3</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.sap.hcp.cf.logging</groupId>
+			  	<artifactId>cf-java-logging-support-logback</artifactId>
+			  	<version>${cf-logging-version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	
+
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<!-- STEPS TO GENERATE CDS ARTIFACTS WITH AVAILABLE NODE/NPM -->
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>exec-maven-plugin</artifactId>
+					<version>1.6.0</version>
+					<executions>
+						<execution>
+							<id>cds build</id>
+							<phase>initialize</phase>
+							<goals>
+								<goal>exec</goal>
+							</goals>
+							<configuration>
+								<executable>npm</executable>
+								<arguments>
+									<argument>run</argument>
+									<argument>build</argument>
+								</arguments>
+							</configuration>
+						</execution>
+
+						<execution>
+							<id>cds schema</id>
+							<phase>initialize</phase>
+							<goals>
+								<goal>exec</goal>
+							</goals>
+							<configuration>
+								<executable>npm</executable>
+								<arguments>
+									<argument>run</argument>
+									<argument>schema</argument>
+								</arguments>
+							</configuration>
+						</execution>
+
+						<execution>
+							<id>cds deploy</id>
+							<phase>initialize</phase>
+							<goals>
+								<goal>exec</goal>
+							</goals>
+							<configuration>
+								<executable>npm</executable>
+								<arguments>
+									<argument>run</argument>
+									<argument>deploy</argument>
+								</arguments>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+
+				<!-- STEPS TO GENERATE CDS ARTIFACTS WITH EIRSLETT -->
+				<plugin>
+					<groupId>com.github.eirslett</groupId>
+					<artifactId>frontend-maven-plugin</artifactId>
+					<version>1.9.1</version>
+					<executions>
+						<execution>
+							<id>install-node-and-npm</id>
+							<phase>initialize</phase>
+							<goals>
+								<goal>install-node-and-npm</goal>
+							</goals>
+							<configuration>
+								<downloadRoot>${node.url}</downloadRoot>
+								<nodeVersion>${node.version}</nodeVersion>
+								<npmInheritsProxyConfigFromMaven>true</npmInheritsProxyConfigFromMaven>
+							</configuration>
+						</execution>
+
+						<execution>
+							<id>npm install</id>
+							<phase>initialize</phase>
+							<goals>
+								<goal>npm</goal>
+							</goals>
+							<configuration>
+								<arguments>install</arguments>
+							</configuration>
+						</execution>
+
+						<execution>
+							<id>cds build</id>
+							<phase>initialize</phase>
+							<goals>
+								<goal>npm</goal>
+							</goals>
+							<configuration>
+								<arguments>run build</arguments>
+							</configuration>
+						</execution>
+
+						<execution>
+							<id>cds schema</id>
+							<phase>initialize</phase>
+							<goals>
+								<goal>npm</goal>
+							</goals>
+							<configuration>
+								<arguments>run schema</arguments>
+							</configuration>
+						</execution>
+
+						<execution>
+							<id>cds deploy</id>
+							<phase>initialize</phase>
+							<goals>
+								<goal>npm</goal>
+							</goals>
+							<configuration>
+								<arguments>run deploy</arguments>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+
+
+				<!-- POM FLATTENING FOR CI FRIENDLY VERSIONS -->
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>flatten-maven-plugin</artifactId>
+					<version>1.2.2</version>
+					<configuration>
+						<updatePomFile>true</updatePomFile>
+					 	<flattenMode>resolveCiFriendliesOnly</flattenMode>
+					</configuration>
+					<executions>
+						<execution>
+							<id>flatten</id>
+							<phase>process-resources</phase>
+							<goals>
+								<goal>flatten</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>flatten.clean</id>
+							<phase>clean</phase>
+							<goals>
+								<goal>clean</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+
+
+
+			</plugins>
+		</pluginManagement>
+
+		<plugins>
+			<!-- JAVA VERSION -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
+				<configuration>
+					<source>${jdk.version}</source>
+					<target>${jdk.version}</target>
+          			<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+
+			<!-- write Artifact version, so that SystemSet Service can read it -->
+			<plugin>
+			    <groupId>org.apache.maven.plugins</groupId>
+			    <artifactId>maven-jar-plugin</artifactId>
+			    <version>3.2.0</version>
+			    <configuration>
+			        <archive>                   
+			            <manifest>
+			                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+			                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+			            </manifest>
+			        </archive>
+			    </configuration>
+			</plugin>
+
+			<!-- MAKE SPRING BOOT PLUGIN RUNNABLE FROM ROOT -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>${spring.boot.version}</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+
+
+
+			<!-- PROJECT STRUCTURE CHECKS -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.0.0-M3</version>
+				<executions>
+					<execution>
+						<id>Project Structure Checks</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>3.5</version>
+								</requireMavenVersion>
+								<requireJavaVersion>
+									<version>${jdk.version}</version>
+								</requireJavaVersion>
+								<requireProperty>
+									<property>project.artifactId</property>
+									<regex>[^_]+</regex>
+									<regexMessage>"The artifactId should not contain underscores
+										(_) as this causes issues when deploying to Cloud Foundry."</regexMessage>
+								</requireProperty>
+								<reactorModuleConvergence />
+							</rules>
+							<fail>true</fail>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

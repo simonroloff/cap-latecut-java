@@ -1,0 +1,57 @@
+{
+  "name": "kora-latecut",
+  "version": "1.0.0",
+  "description": "This file is used, when calling 'cds deploy --to hana:<hana-service-name>''",
+  "license": "ISC",
+  "repository": "<Add your repository here>",
+  "scripts": {
+    "build": "cds build/all --clean",
+    "schema": "cds compile ./srv-books --to sql > src/main/resources/schema.sql; cds compile ./srv-movies --to sql >> src/main/resources/schema.sql",
+    "deploy": "cds deploy"
+  },
+  "dependencies": {
+    "@sap/cds": "^4.6.5",
+    "@sap/hana-client": "^2.7.26"
+  },
+  "cds": {
+    "hana": {
+      "deploy-format": "hdbtable"
+    },
+    "build": {
+
+    },
+    "requires": {
+      "db": {
+        "kind": "sqlite",
+        "model": [
+          "./srv-books",
+          "./srv-books/db",
+          "./srv-movies",
+          "./srv-movies/db"
+        ],
+        "[production]": {
+          "kind": "hana"
+        }
+      },
+      "kora-latecut": {
+        "kind": "sql",
+        "[production]": {
+          "kind": "hana",
+          "model": [
+          "./srv-books",
+          "./srv-books/db",
+          "./srv-movies",
+          "./srv-movies/db"
+          ]
+        }
+      }
+    },
+    "odata": {
+      "version": "v2"
+    }
+  },
+  "devDependencies": {
+    "@sap/hdi-deploy": "^4.0.4",
+    "sqlite3": "^5.0.2"
+  }
+}
